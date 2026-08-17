@@ -4,10 +4,8 @@ project(ion)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# OpenGL
 find_package(OpenGL REQUIRED)
 
-# GLFW
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -17,7 +15,6 @@ add_subdirectory(
         ${CMAKE_BINARY_DIR}/glfw
 )
 
-# GLAD
 add_library(glad
         libraries/glad/src/glad.c
 )
@@ -26,21 +23,42 @@ target_include_directories(glad PUBLIC
         libraries/glad/include
 )
 
-# ion
-add_executable(ion src/main.cpp
-        src/app.cpp
-        headers/app.h)
+add_library(imgui
+        libraries/imgui/imgui.cpp
+        libraries/imgui/imgui_draw.cpp
+        libraries/imgui/imgui_tables.cpp
+        libraries/imgui/imgui_widgets.cpp
+        libraries/imgui/backends/imgui_impl_glfw.cpp
+        libraries/imgui/backends/imgui_impl_opengl3.cpp
+)
 
-# Include directories
+target_include_directories(imgui PUBLIC
+        libraries/imgui
+        libraries/imgui/backends
+)
+
+target_link_libraries(imgui PUBLIC
+        glfw
+        OpenGL::GL
+)
+
+add_executable(ion
+        src/main.cpp
+        src/app.cpp
+        headers/app.h
+)
+
 target_include_directories(ion PRIVATE
         libraries/glad/include
         libraries/glfw-3.5.1/include
         libraries/glm
+        libraries/imgui
+        libraries/imgui/backends
 )
 
-# Libraries
 target_link_libraries(ion PRIVATE
         glad
         glfw
         OpenGL::GL
+        imgui
 )
