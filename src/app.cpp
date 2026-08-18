@@ -199,7 +199,7 @@ void App::InitializeHierarchyWindow() {
 				mesh->modelPath = "assets/monkey.obj";
 				mesh->Init();
 
-				scene.objects.push_back({ "New Sphere", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), mesh });
+				scene.objects.push_back({ "New Monkey", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), mesh });
 			}
 			ImGui::EndMenu();
 		}
