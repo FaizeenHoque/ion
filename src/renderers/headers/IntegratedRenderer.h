@@ -22,7 +22,10 @@ public:
 	void Init(GLFWwindow* window);
 	void Render(const Scene &scene);
 
-};
+private:
+	void SetupCubeMesh();
+	void SetupSphereMesh();
 
+};
 
 #endif //ION_INTEGRATEDRENDERER_H

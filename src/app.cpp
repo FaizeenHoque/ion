@@ -29,6 +29,13 @@ void App::Init() {
 
 	renderer.Init(window);
 
+	camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
+	camera.rotation = glm::vec3(0.0f, -90.0f, 0.0f);
+	camera.fov = 60.0f;
+	camera.farPlane = 100.0f;
+	camera.nearPlane = 0.1f;
+	camera.aspect = 1280.0 / 720.0f;
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -57,14 +64,7 @@ void App::EngineLoop() {
 	glClearColor(0.184f, 0.188f, 0.188f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
-	camera.rotation = glm::vec3(0.0f, -90.0f, 0.0f);
-	camera.fov = 60.0f;
-	camera.farPlane = 100.0f;
-	camera.nearPlane = 0.1f;
-	camera.aspect = 1280.0 / 720.0f;
 	camera.Init(renderer.shaderProgram);
-
 	renderer.Render(scene);
 	InitializeInspectorWindow();
 

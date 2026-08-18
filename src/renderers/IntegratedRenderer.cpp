@@ -6,6 +6,37 @@
 void IntegratedRenderer::Init(GLFWwindow *window_) {
 	window = window_;
 
+	SetupCubeMesh();
+	SetupSphereMesh();
+
+	glEnable(GL_DEPTH_TEST);
+
+	Shader shader("shaders/IRenderer/vert.glsl", "shaders/IRenderer/frag.glsl");
+	shaderProgram = shader.shaderProgram;
+}
+
+void IntegratedRenderer::Render(const Scene& scene) {
+	glUseProgram(shaderProgram);
+	GLint modelLocation = glGetUniformLocation(shaderProgram, "model");
+	GLint colorLocation = glGetUniformLocation(shaderProgram, "objectColor");
+
+	for (const auto& obj : scene.objects) {
+		if (!obj.mesh) continue;
+
+		glm::mat4 model = glm::translate(glm::mat4(1.0f), obj.position);
+		model = glm::rotate(model, glm::radians(obj.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(obj.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(obj.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::scale(model, obj.scale);
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glUniform3fv(colorLocation, 1, glm::value_ptr(obj.color));
+
+		obj.mesh->Bind();
+		glDrawElements(GL_TRIANGLES, obj.mesh->GetIndexCount(), GL_UNSIGNED_INT, nullptr);
+	}
+}
+
+void IntegratedRenderer::SetupCubeMesh() {
 	std::vector cubeVerts = {
 		-0.5f, -0.5f,  0.5f,   0.5f, -0.5f,  0.5f,
 		 0.5f,  0.5f,  0.5f,  -0.5f,  0.5f,  0.5f,
@@ -18,8 +49,8 @@ void IntegratedRenderer::Init(GLFWwindow *window_) {
 		3,2,6, 6,7,3,  4,5,1, 1,0,4
 	};
 	cubeMesh.Init(cubeVerts, cubeIdx);
-
-
+}
+void IntegratedRenderer::SetupSphereMesh() {
 	std::vector<float> sphereVerts;
 	std::vector<unsigned int> sphereIdx;
 
@@ -59,29 +90,4 @@ void IntegratedRenderer::Init(GLFWwindow *window_) {
 
 	sphereMesh.Init(sphereVerts, sphereIdx);
 
-	glEnable(GL_DEPTH_TEST);
-
-	Shader shader("shaders/IRenderer/vert.glsl", "shaders/IRenderer/frag.glsl");
-	shaderProgram = shader.shaderProgram;
-}
-
-void IntegratedRenderer::Render(const Scene& scene) {
-	glUseProgram(shaderProgram);
-	GLint modelLocation = glGetUniformLocation(shaderProgram, "model");
-	GLint colorLocation = glGetUniformLocation(shaderProgram, "objectColor");
-
-	for (const auto& obj : scene.objects) {
-		if (!obj.mesh) continue;
-
-		glm::mat4 model = glm::translate(glm::mat4(1.0f), obj.position);
-		model = glm::rotate(model, glm::radians(obj.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(obj.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(obj.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-		model = glm::scale(model, obj.scale);
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-		glUniform3fv(colorLocation, 1, glm::value_ptr(obj.color));
-
-		obj.mesh->Bind();
-		glDrawElements(GL_TRIANGLES, obj.mesh->GetIndexCount(), GL_UNSIGNED_INT, nullptr);
-	}
 }
