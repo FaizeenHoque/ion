@@ -5,7 +5,7 @@
 #include <sstream>
 
 #include "headers/shader.h"
-#include "renderers/IntegratedRenderer.h"
+#include "renderers/headers/IntegratedRenderer.h"
 
 App::App(std::string windowTitle, float windowWidth, float windowHeight): WINDOW_TITLE(windowTitle), WINDOW_WIDTH(windowWidth), WINDOW_HEIGHT(windowHeight) {
 }
@@ -49,7 +49,7 @@ void App::EngineLoop() {
 	InputManager();
 
 	glClearColor(0.184f, 0.188f, 0.188f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	renderer.Render();
 

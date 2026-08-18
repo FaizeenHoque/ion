@@ -1,4 +1,4 @@
-#include "IntegratedRenderer.h"
+#include "headers/IntegratedRenderer.h"
 
 #include "../headers/shader.h"
 
@@ -22,6 +22,8 @@ void IntegratedRenderer::Init(GLFWwindow *window_) {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
 	glEnableVertexAttribArray(0);
 
+	glEnable(GL_DEPTH_TEST);
+
 	Shader shader("shaders/IRenderer/vert.glsl", "shaders/IRenderer/frag.glsl");
 	shaderProgram = shader.shaderProgram;
 }
@@ -29,5 +31,26 @@ void IntegratedRenderer::Init(GLFWwindow *window_) {
 void IntegratedRenderer::Render() {
 	glUseProgram(shaderProgram);
 	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+	GLint modelLocation = glGetUniformLocation(shaderProgram, "model");
+	GLint viewLocation = glGetUniformLocation(shaderProgram, "view");
+	GLint projectionLocation = glGetUniformLocation(shaderProgram, "projection");
+
+	glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 3.0f);
+
+	glm::mat4 view = glm::lookAt(cameraPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 projection = glm::perspective(glm::radians(60.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
+
+	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
+	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
+
+	glm::mat4 model;
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(-0.75f, 0.0f, 0.0f));
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
+	model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.75f, 0.0f, 0.0f));
+	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 }

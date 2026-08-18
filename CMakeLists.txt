@@ -39,9 +39,9 @@ add_executable(ion
         src/shader.cpp
         src/headers/shader.h
         src/renderers/IntegratedRenderer.cpp
-        src/renderers/IntegratedRenderer.h
+        src/renderers/headers/IntegratedRenderer.h
         src/renderers/FQRenderer.cpp
-        src/renderers/FQRenderer.h
+        src/renderers/headers/FQRenderer.h
 )
 target_include_directories(ion PRIVATE
         libraries/glad/include

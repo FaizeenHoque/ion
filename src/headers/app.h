@@ -10,7 +10,7 @@
 #include <string>
 #include <GLFW/glfw3.h>
 
-#include "../renderers/IntegratedRenderer.h"
+#include "../renderers/headers/IntegratedRenderer.h"
 
 class App {
 public:
