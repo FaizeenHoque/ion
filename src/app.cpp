@@ -66,7 +66,16 @@ void App::EngineLoop() {
 
 	camera.Init(renderer.shaderProgram);
 	renderer.Render(scene);
-	InitializeInspectorWindow();
+
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+
+	InitializeHierarchyWindow();
+	InitializePropertiesWindow();
+
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 	glfwSwapBuffers(window);
 	glfwPollEvents();
@@ -78,12 +87,8 @@ void App::InputManager() {
 	}
 }
 
-void App::InitializeInspectorWindow() {
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-
-	ImGui::Begin("Inspector");
+void App::InitializeHierarchyWindow() {
+	ImGui::Begin("Hierarchy");
 
 	if (ImGui::BeginPopupContextWindow("AddObjectMenu", ImGuiPopupFlags_MouseButtonRight)) {
 		if (ImGui::BeginMenu("GameObjects")) {
@@ -98,36 +103,59 @@ void App::InitializeInspectorWindow() {
 		ImGui::EndPopup();
 	}
 
-	ImGui::Separator();
-
 	int toDelete = -1;
 	for (int i = 0; i < scene.objects.size(); ++i) {
-		auto& object = scene.objects[i];
 		ImGui::PushID(i);
-
-		char nameBuf[128];
-		strncpy(nameBuf, object.name.c_str(), sizeof(nameBuf));
-		nameBuf[sizeof(nameBuf) - 1] = '\0';
-		if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) {
-			object.name = nameBuf;
+		bool isSelected = (selectedIndex == i);
+		if (ImGui::Selectable(scene.objects[i].name.c_str(), isSelected)) {
+			selectedIndex = i;
 		}
-
-		ImGui::DragFloat3("Position", &object.position.x, 0.1f);
-		ImGui::DragFloat3("Rotation", &object.rotation.x, 1.0f);
-		ImGui::DragFloat3("Scale", &object.scale.x, 0.1f);
-		ImGui::ColorEdit3("Color", &object.color.x);
-		if (ImGui::Button("Delete")) {
-			toDelete = i;
+		if (ImGui::BeginPopupContextItem("ObjectContextMenu")) {
+			if (ImGui::MenuItem("Delete")) {
+				toDelete = i;
+			}
+			ImGui::EndPopup();
 		}
-		ImGui::Separator();
 		ImGui::PopID();
 	}
 
 	if (toDelete != -1) {
 		scene.objects.erase(scene.objects.begin() + toDelete);
+		if (selectedIndex == toDelete) selectedIndex = -1;
+		else if (selectedIndex > toDelete) selectedIndex--;
 	}
 
 	ImGui::End();
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+void App::InitializePropertiesWindow() {
+	ImGui::Begin("Properties");
+
+	if (selectedIndex < 0 || selectedIndex >= (int)scene.objects.size()) {
+		ImGui::TextDisabled("No object selected");
+		ImGui::End();
+		return;
+	}
+
+	auto& object = scene.objects[selectedIndex];
+	ImGui::PushID(selectedIndex);
+
+	char nameBuf[128];
+	strncpy(nameBuf, object.name.c_str(), sizeof(nameBuf));
+	nameBuf[sizeof(nameBuf) - 1] = '\0';
+	if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) {
+		object.name = nameBuf;
+	}
+
+	ImGui::Separator();
+	ImGui::Text("Transforms");
+	ImGui::DragFloat3("Position", &object.position.x, 0.1f);
+	ImGui::DragFloat3("Rotation", &object.rotation.x, 1.0f);
+	ImGui::DragFloat3("Scale", &object.scale.x, 0.1f);
+
+	ImGui::Separator();
+	ImGui::Text("Material");
+	ImGui::ColorEdit3("Color", &object.color.x);
+
+	ImGui::PopID();
+	ImGui::End();
 }

@@ -26,12 +26,16 @@ public:
 
 	App(std::string windowTitle, float windowWidth, float windowHeight);
 	void Init();
-	void EngineLoop();
-	void InputManager();
 
-	void InitializeInspectorWindow();
 private:
 	float lastFrameTime = 0.0f;
+
+	int selectedIndex = -1;
+
+	void EngineLoop();
+	void InputManager();
+	void InitializeHierarchyWindow();
+	void InitializePropertiesWindow();
 };
 
 
