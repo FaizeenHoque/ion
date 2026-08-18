@@ -59,9 +59,6 @@ void IntegratedRenderer::Init(GLFWwindow *window_) {
 
 	sphereMesh.Init(sphereVerts, sphereIdx);
 
-
-
-
 	glEnable(GL_DEPTH_TEST);
 
 	Shader shader("shaders/IRenderer/vert.glsl", "shaders/IRenderer/frag.glsl");
@@ -71,6 +68,7 @@ void IntegratedRenderer::Init(GLFWwindow *window_) {
 void IntegratedRenderer::Render(const Scene& scene) {
 	glUseProgram(shaderProgram);
 	GLint modelLocation = glGetUniformLocation(shaderProgram, "model");
+	GLint colorLocation = glGetUniformLocation(shaderProgram, "objectColor");
 
 	for (const auto& obj : scene.objects) {
 		if (!obj.mesh) continue;
@@ -78,6 +76,7 @@ void IntegratedRenderer::Render(const Scene& scene) {
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), obj.position);
 		model = glm::scale(model, obj.scale);
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+		glUniform3fv(colorLocation, 1, glm::value_ptr(obj.color));
 
 		obj.mesh->Bind();
 		glDrawElements(GL_TRIANGLES, obj.mesh->GetIndexCount(), GL_UNSIGNED_INT, nullptr);
