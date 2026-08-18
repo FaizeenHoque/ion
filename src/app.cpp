@@ -6,6 +6,7 @@
 
 #include "headers/camera.h"
 #include "headers/shader.h"
+#include "headers/types.h"
 #include "renderers/headers/IntegratedRenderer.h"
 
 App::App(std::string windowTitle, float windowWidth, float windowHeight): WINDOW_TITLE(windowTitle), WINDOW_WIDTH(windowWidth), WINDOW_HEIGHT(windowHeight) {
@@ -28,6 +29,14 @@ void App::Init() {
 
 	renderer.Init(window);
 
+	scene.objects = {
+				{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f, 0.0f, 0.0f), &renderer.cubeMesh },
+				{ glm::vec3(2.0f, 0.0f, 0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f, 1.0f, 0.0f), &renderer.cubeMesh },
+				{ glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f, 0.0f, 1.0f), &renderer.cubeMesh },
+				{ glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f, 1.0f, 0.0f), &renderer.cubeMesh },
+				{ glm::vec3(0.0f, -2.0f, 0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f, 0.0f, 1.0f), &renderer.cubeMesh }
+	};
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -49,10 +58,14 @@ void App::Init() {
 void App::EngineLoop() {
 	InputManager();
 
+	float currentTime = static_cast<float>(glfwGetTime());
+	float deltaTime = currentTime - lastFrameTime;
+	lastFrameTime = currentTime;
+
 	glClearColor(0.184f, 0.188f, 0.188f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	camera.position = glm::vec3(0.0f, 0.0f, 3.0f);
+	camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
 	camera.rotation = glm::vec3(0.0f, -90.0f, 0.0f);
 	camera.fov = 60.0f;
 	camera.farPlane = 100.0f;
@@ -60,8 +73,12 @@ void App::EngineLoop() {
 	camera.aspect = 1280.0 / 720.0f;
 	camera.Init(renderer.shaderProgram);
 
-	renderer.Render();
+	static float t = 0.0f;
+	t += deltaTime;
+	scene.objects[0].position.x = sin(t) * 2.0f;
+	scene.objects[0].position.y = cos(t) * 2.0f;
 
+	renderer.Render(scene);
 	InitializeInspectorWindow();
 
 	glfwSwapBuffers(window);

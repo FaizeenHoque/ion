@@ -22,6 +22,7 @@ public:
 	GLFWwindow* window;
 	Camera camera;
 	IntegratedRenderer renderer;
+	Scene scene;
 
 	App(std::string windowTitle, float windowWidth, float windowHeight);
 	void Init();
@@ -29,6 +30,8 @@ public:
 	void InputManager();
 
 	void InitializeInspectorWindow();
+private:
+	float lastFrameTime = 0.0f;
 };
 
 

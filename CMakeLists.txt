@@ -13,6 +13,7 @@ add_subdirectory(
 add_library(glad
         libraries/glad/src/glad.c
         src/headers/camera.h
+        src/headers/types.h
 )
 target_include_directories(glad PUBLIC
         libraries/glad/include
