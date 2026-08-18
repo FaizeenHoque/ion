@@ -4,6 +4,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "headers/shader.h"
+
 App::App(std::string windowTitle, float windowWidth, float windowHeight): WINDOW_TITLE(windowTitle), WINDOW_WIDTH(windowWidth), WINDOW_HEIGHT(windowHeight) {
 }
 
@@ -33,18 +35,8 @@ void App::Init() {
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-	std::string vertexSrc = LoadShaderSource("shaders/vert.glsl");
-	std::string fragmentSrc = LoadShaderSource("shaders/frag.glsl");
-	unsigned int vertexShader = CompileShader(GL_VERTEX_SHADER, vertexSrc.c_str());
-	unsigned int fragmentShader = CompileShader(GL_FRAGMENT_SHADER, fragmentSrc.c_str());
-
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	shader shader("shaders/IRenderer/vert.glsl", "shaders/IRenderer/frag.glsl");
+	shaderProgram = shader.shaderProgram;
 
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
@@ -113,27 +105,4 @@ void App::InitializeInspectorWindow() {
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
-unsigned int App::CompileShader(unsigned int type, const char *source) {
-	unsigned int shader = glCreateShader(type);
-	glShaderSource(shader, 1, &source, NULL);
-	glCompileShader(shader);
-
-	int success;
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		char infoLog[512];
-		glGetShaderInfoLog(shader, 512, NULL, infoLog);
-		std::cout << "Shader compile error: " << infoLog << std::endl;
-	}
-
-	return shader;
-}
-
-std::string App::LoadShaderSource(const char *path) {
-	std::ifstream file(path);
-	std::stringstream buffer;
-	buffer << file.rdbuf();
-	return buffer.str();
 }
