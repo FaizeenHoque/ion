@@ -1,28 +1,22 @@
-#include "../headers/app.h"
+#include "headers/app.h"
 
+#include <fstream>
 #include <iostream>
-
-const char *VERTEX_SHADER_SRC = R"(
-#version 330 core
-layout (location = 0) in vec3 aPos;
-
-void main() {
-	gl_Position = vec4(aPos, 1.0);
-}
-)";
-
-const char *FRAGMENT_SHADER_SRC = R"(
-#version 330 core
-out vec4 FragColor;
-
-void main() {
-	FragColor = vec4(1.0, 0.5, 0.2, 1.0);
-}
-)";
-
+#include <sstream>
 
 App::App(std::string windowTitle, float windowWidth, float windowHeight): WINDOW_TITLE(windowTitle), WINDOW_WIDTH(windowWidth), WINDOW_HEIGHT(windowHeight) {
 }
+
+float vertices[] = {
+	0.5f,  0.5f, 0.0f,
+	0.5f, -0.5f, 0.0f,
+   -0.5f, -0.5f, 0.0f,
+   -0.5f,  0.5f, 0.0f,
+};
+unsigned int indices[] = {
+	0, 1, 3,
+	1, 2, 3,
+};
 
 void App::Init() {
 	glfwInit();
@@ -39,8 +33,10 @@ void App::Init() {
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-	unsigned int vertexShader = CompileShader(GL_VERTEX_SHADER, VERTEX_SHADER_SRC);
-	unsigned int fragmentShader = CompileShader(GL_FRAGMENT_SHADER, FRAGMENT_SHADER_SRC);
+	std::string vertexSrc = LoadShaderSource("shaders/vert.glsl");
+	std::string fragmentSrc = LoadShaderSource("shaders/frag.glsl");
+	unsigned int vertexShader = CompileShader(GL_VERTEX_SHADER, vertexSrc.c_str());
+	unsigned int fragmentShader = CompileShader(GL_FRAGMENT_SHADER, fragmentSrc.c_str());
 
 	shaderProgram = glCreateProgram();
 	glAttachShader(shaderProgram, vertexShader);
@@ -133,4 +129,11 @@ unsigned int App::CompileShader(unsigned int type, const char *source) {
 	}
 
 	return shader;
+}
+
+std::string App::LoadShaderSource(const char *path) {
+	std::ifstream file(path);
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	return buffer.str();
 }

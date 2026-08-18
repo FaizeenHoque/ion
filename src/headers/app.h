@@ -20,6 +20,8 @@ public:
 
 	unsigned int CompileShader(unsigned int type, const char *source);
 
+	std::string LoadShaderSource(const char *path);
+
 	App(std::string windowTitle, float windowWidth, float windowHeight);
 	void Init();
 
@@ -32,14 +34,13 @@ public:
 private:
 	unsigned int VAO, VBO, EBO;
 	unsigned int shaderProgram;
-	// 4 unique vertices instead of 6 (no duplication for the shared edge)
+	// 4 unique vertices instead of 6
 	float vertices[12] = {
 		0.5f,  0.5f, 0.0f,  // top right    -> index 0
 		0.5f, -0.5f, 0.0f,  // bottom right -> index 1
 	   -0.5f, -0.5f, 0.0f,  // bottom left  -> index 2
 	   -0.5f,  0.5f, 0.0f,  // top left     -> index 3
    };
-	// two triangles, referencing the 4 vertices above by index
 	unsigned int indices[6] = {
 		0, 1, 3,  // first triangle
 		1, 2, 3,  // second triangle

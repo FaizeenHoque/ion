@@ -45,7 +45,7 @@ target_link_libraries(imgui PUBLIC
 add_executable(ion
         src/main.cpp
         src/app.cpp
-        headers/app.h
+        src/headers/app.h
 )
 
 target_include_directories(ion PRIVATE
@@ -62,3 +62,16 @@ target_link_libraries(ion PRIVATE
         OpenGL::GL
         imgui
 )
+
+file(GLOB SHADER_FILES ${CMAKE_SOURCE_DIR}/src/shaders/*.glsl)
+
+add_custom_command(
+        OUTPUT ${CMAKE_BINARY_DIR}/shaders_copied.stamp
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/src/shaders $<TARGET_FILE_DIR:ion>/shaders
+        COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_BINARY_DIR}/shaders_copied.stamp
+        DEPENDS ${SHADER_FILES}
+)
+
+add_custom_target(copy_shaders ALL DEPENDS ${CMAKE_BINARY_DIR}/shaders_copied.stamp)
+add_dependencies(ion copy_shaders)

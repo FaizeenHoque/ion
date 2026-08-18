@@ -1,4 +1,4 @@
-#include "../headers/app.h"
+#include "headers/app.h"
 
 // Settings
 #define WINDOW_WIDTH 1800
