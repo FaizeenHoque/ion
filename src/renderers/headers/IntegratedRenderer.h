@@ -33,7 +33,6 @@ private:
 		 0.5f,  0.5f, -0.5f,
 		-0.5f,  0.5f, -0.5f
 	};
-
 	unsigned int indices[36] = {
 		// Front
 		0, 1, 2,
@@ -59,7 +58,6 @@ private:
 		4, 5, 1,
 		1, 0, 4
 	};
-
 };
 
 

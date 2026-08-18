@@ -1,8 +1,6 @@
 #include "headers/IntegratedRenderer.h"
 
-#include "../headers/camera.h"
 #include "../headers/shader.h"
-
 
 void IntegratedRenderer::Init(GLFWwindow *window_) {
 	window = window_;
@@ -32,14 +30,6 @@ void IntegratedRenderer::Init(GLFWwindow *window_) {
 void IntegratedRenderer::Render() {
 	glUseProgram(shaderProgram);
 	glBindVertexArray(VAO);
-
-	Camera camera;
-	camera.position = glm::vec3(0.0f, 0.0f, 3.0f);
-	camera.rotation = glm::vec3(0.0f, -90.0f, 0.0f);
-	camera.farPlane = 100.0f;
-	camera.nearPlane = 0.1f;
-	camera.aspect = 1280.0 / 720.0f;
-	camera.Init(shaderProgram);
 
 	GLint modelLocation = glGetUniformLocation(shaderProgram, "model");
 

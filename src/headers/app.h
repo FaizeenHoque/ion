@@ -10,6 +10,7 @@
 #include <string>
 #include <GLFW/glfw3.h>
 
+#include "camera.h"
 #include "../renderers/headers/IntegratedRenderer.h"
 
 class App {
@@ -19,6 +20,7 @@ public:
 	float WINDOW_HEIGHT;
 
 	GLFWwindow* window;
+	Camera camera;
 	IntegratedRenderer renderer;
 
 	App(std::string windowTitle, float windowWidth, float windowHeight);

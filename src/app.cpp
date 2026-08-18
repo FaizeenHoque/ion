@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "headers/camera.h"
 #include "headers/shader.h"
 #include "renderers/headers/IntegratedRenderer.h"
 
@@ -51,6 +52,14 @@ void App::EngineLoop() {
 	glClearColor(0.184f, 0.188f, 0.188f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	camera.position = glm::vec3(0.0f, 0.0f, 3.0f);
+	camera.rotation = glm::vec3(0.0f, -90.0f, 0.0f);
+	camera.fov = 60.0f;
+	camera.farPlane = 100.0f;
+	camera.nearPlane = 0.1f;
+	camera.aspect = 1280.0 / 720.0f;
+	camera.Init(renderer.shaderProgram);
+
 	renderer.Render();
 
 	InitializeInspectorWindow();
@@ -71,7 +80,7 @@ void App::InitializeInspectorWindow() {
 	ImGui::NewFrame();
 
 	ImGui::Begin("Inspector");
-	ImGui::Text("Hello from ImGui Window!");
+
 	ImGui::End();
 
 	ImGui::Render();
