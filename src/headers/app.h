@@ -19,6 +19,12 @@ public:
 	float WINDOW_WIDTH;
 	float WINDOW_HEIGHT;
 
+	int viewportWidth = 1280;
+	int viewportHeight = 720;
+	const float TARGET_ASPECT = 16.0f / 9.0f;
+
+	void CreateViewportFramebuffer(int width, int height);
+
 	GLFWwindow* window;
 	Camera camera;
 	IntegratedRenderer renderer;
@@ -30,12 +36,17 @@ public:
 private:
 	float lastFrameTime = 0.0f;
 
+	unsigned int viewportFBO;
+	unsigned int viewportTexture;
+	unsigned int viewportRBO;
+
 	int selectedIndex = -1;
 
 	void EngineLoop();
 	void InputManager();
 	void InitializeHierarchyWindow();
 	void InitializePropertiesWindow();
+	void InitializeViewportWindow();
 };
 
 

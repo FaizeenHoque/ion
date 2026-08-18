@@ -28,13 +28,14 @@ void App::Init() {
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
 	renderer.Init(window);
+	CreateViewportFramebuffer(1280, 720);
 
 	camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
 	camera.rotation = glm::vec3(0.0f, -90.0f, 0.0f);
 	camera.fov = 60.0f;
 	camera.farPlane = 100.0f;
 	camera.nearPlane = 0.1f;
-	camera.aspect = 1280.0 / 720.0f;
+	camera.aspect = (float)viewportWidth / (float)viewportHeight;
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -61,11 +62,21 @@ void App::EngineLoop() {
 	float deltaTime = currentTime - lastFrameTime;
 	lastFrameTime = currentTime;
 
+	// render scene into the offscreen framebuffer, using whatever
+	// size the viewport panel was last frame
+	glBindFramebuffer(GL_FRAMEBUFFER, viewportFBO);
+	glViewport(0, 0, viewportWidth, viewportHeight);
 	glClearColor(0.184f, 0.188f, 0.188f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	camera.aspect = (float)viewportWidth / (float)viewportHeight;
 	camera.Init(renderer.shaderProgram);
 	renderer.Render(scene);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
@@ -73,6 +84,7 @@ void App::EngineLoop() {
 
 	InitializeHierarchyWindow();
 	InitializePropertiesWindow();
+	InitializeViewportWindow();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -87,6 +99,33 @@ void App::InputManager() {
 	}
 }
 
+void App::CreateViewportFramebuffer(int width, int height) {
+	if (viewportFBO) {
+		glDeleteFramebuffers(1, &viewportFBO);
+		glDeleteTextures(1, &viewportTexture);
+		glDeleteRenderbuffers(1, &viewportRBO);
+	}
+
+	glGenFramebuffers(1, &viewportFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, viewportFBO);
+
+	glGenTextures(1, &viewportTexture);
+	glBindTexture(GL_TEXTURE_2D, viewportTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, viewportTexture, 0);
+
+	glGenRenderbuffers(1, &viewportRBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, viewportRBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, viewportRBO);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	viewportWidth = width;
+	viewportHeight = height;
+}
 void App::InitializeHierarchyWindow() {
 	ImGui::Begin("Hierarchy");
 
@@ -157,5 +196,36 @@ void App::InitializePropertiesWindow() {
 	ImGui::ColorEdit3("Color", &object.color.x);
 
 	ImGui::PopID();
+	ImGui::End();
+}
+void App::InitializeViewportWindow() {
+	ImGui::Begin("Viewport");
+
+	ImVec2 available = ImGui::GetContentRegionAvail();
+
+	float displayWidth = available.x;
+	float displayHeight = displayWidth / TARGET_ASPECT;
+
+	// if fitting by width made it taller than the available space,
+	// fit by height instead
+	if (displayHeight > available.y) {
+		displayHeight = available.y;
+		displayWidth = displayHeight * TARGET_ASPECT;
+	}
+
+	// center the image inside the leftover space
+	ImVec2 cursorPos = ImGui::GetCursorPos();
+	cursorPos.x += (available.x - displayWidth) * 0.5f;
+	cursorPos.y += (available.y - displayHeight) * 0.5f;
+	ImGui::SetCursorPos(cursorPos);
+
+	int newWidth = (int)displayWidth;
+	int newHeight = (int)displayHeight;
+	if (newWidth > 0 && newHeight > 0 && (abs(newWidth - viewportWidth) > 1 || abs(newHeight - viewportHeight) > 1)) {
+		CreateViewportFramebuffer(newWidth, newHeight);
+	}
+
+	ImGui::Image((ImTextureID)(intptr_t)viewportTexture, ImVec2(displayWidth, displayHeight), ImVec2(0, 1), ImVec2(1, 0));
+
 	ImGui::End();
 }
