@@ -14,7 +14,7 @@ public:
 	float farPlane;
 	float aspect;
 
-	Camera(GLuint shaderProgram, glm::vec3 position, glm::vec3 rotation, float fov, float near, float far, float aspect);
+	void Init(GLuint shaderProgram);
 };
 
 

@@ -4,7 +4,7 @@
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-Camera::Camera(GLuint shaderProgram, glm::vec3 position, glm::vec3 rotation, float fov, float near, float far, float aspect) {
+void Camera::Init(GLuint shaderProgram) {
 	GLint viewLocation = glGetUniformLocation(shaderProgram, "view");
 	GLint projectionLocation = glGetUniformLocation(shaderProgram, "projection");
 
@@ -14,7 +14,7 @@ Camera::Camera(GLuint shaderProgram, glm::vec3 position, glm::vec3 rotation, flo
 	direction.z = cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
 
 	glm::mat4 view = glm::lookAt(position, position + glm::normalize(direction), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect, near, far);
+	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect, nearPlane, farPlane);
 
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
