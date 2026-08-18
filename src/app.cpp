@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "imgui_internal.h"
 #include "headers/camera.h"
 #include "headers/shader.h"
 #include "headers/types.h"
@@ -18,11 +19,7 @@ void App::Init() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
 	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE.c_str(), NULL, NULL);
-	glfwSetWindowSizeLimits(window, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT);
-	glfwSetWindowSize(window, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -39,8 +36,12 @@ void App::Init() {
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
 	ImGui::StyleColorsDark();
+
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
 
@@ -82,9 +83,11 @@ void App::EngineLoop() {
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
+	InitializeDockspace();
 	InitializeHierarchyWindow();
 	InitializePropertiesWindow();
 	InitializeViewportWindow();
+	InitializeExplorerWindow();
 
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -92,7 +95,6 @@ void App::EngineLoop() {
 	glfwSwapBuffers(window);
 	glfwPollEvents();
 }
-
 void App::InputManager() {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
@@ -125,6 +127,50 @@ void App::CreateViewportFramebuffer(int width, int height) {
 
 	viewportWidth = width;
 	viewportHeight = height;
+}
+
+void App::InitializeDockspace() {
+	ImGuiWindowFlags hostFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
+		ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->WorkPos);
+	ImGui::SetNextWindowSize(viewport->WorkSize);
+	ImGui::SetNextWindowViewport(viewport->ID);
+
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::Begin("DockspaceHost", nullptr, hostFlags);
+	ImGui::PopStyleVar(3);
+
+	ImGuiID dockspaceID = ImGui::GetID("MainDockspace");
+	ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f));
+
+	// only lay windows out once, the very first time this runs
+	static bool layoutBuilt = false;
+	if (!layoutBuilt) {
+		layoutBuilt = true;
+
+		ImGui::DockBuilderRemoveNode(dockspaceID);
+		ImGui::DockBuilderAddNode(dockspaceID, ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(dockspaceID, viewport->WorkSize);
+
+		ImGuiID dockMain = dockspaceID;
+		ImGuiID dockLeft = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Left, 0.20f, nullptr, &dockMain);
+		ImGuiID dockRight = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.25f, nullptr, &dockMain);
+		ImGuiID dockBottom = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.25f, nullptr, &dockMain);
+
+		ImGui::DockBuilderDockWindow("Hierarchy", dockLeft);
+		ImGui::DockBuilderDockWindow("Properties", dockRight);
+		ImGui::DockBuilderDockWindow("Explorer", dockBottom);
+		ImGui::DockBuilderDockWindow("Viewport", dockMain);
+
+		ImGui::DockBuilderFinish(dockspaceID);
+	}
+
+	ImGui::End();
 }
 void App::InitializeHierarchyWindow() {
 	ImGui::Begin("Hierarchy");
@@ -227,5 +273,10 @@ void App::InitializeViewportWindow() {
 
 	ImGui::Image((ImTextureID)(intptr_t)viewportTexture, ImVec2(displayWidth, displayHeight), ImVec2(0, 1), ImVec2(1, 0));
 
+	ImGui::End();
+}
+void App::InitializeExplorerWindow() {
+	ImGui::Begin("Explorer");
+	ImGui::Text("Explorer");
 	ImGui::End();
 }

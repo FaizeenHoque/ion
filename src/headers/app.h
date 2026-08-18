@@ -23,11 +23,9 @@ public:
 	int viewportHeight = 720;
 	const float TARGET_ASPECT = 16.0f / 9.0f;
 
-	void CreateViewportFramebuffer(int width, int height);
-
+	IntegratedRenderer renderer;
 	GLFWwindow* window;
 	Camera camera;
-	IntegratedRenderer renderer;
 	Scene scene;
 
 	App(std::string windowTitle, float windowWidth, float windowHeight);
@@ -44,9 +42,15 @@ private:
 
 	void EngineLoop();
 	void InputManager();
+
+	void InitializeDockspace();
 	void InitializeHierarchyWindow();
 	void InitializePropertiesWindow();
 	void InitializeViewportWindow();
+	void InitializeExplorerWindow();
+
+
+	void CreateViewportFramebuffer(int width, int height);
 };
 
 
