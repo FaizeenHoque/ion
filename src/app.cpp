@@ -29,14 +29,6 @@ void App::Init() {
 
 	renderer.Init(window);
 
-	scene.objects = {
-				{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f, 0.0f, 0.0f), &renderer.cubeMesh },
-				{ glm::vec3(2.0f, 0.0f, 0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f, 1.0f, 0.0f), &renderer.cubeMesh },
-				{ glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(0.0f, 0.0f, 1.0f), &renderer.cubeMesh },
-				{ glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f, 1.0f, 0.0f), &renderer.cubeMesh },
-				{ glm::vec3(0.0f, -2.0f, 0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f, 0.0f, 1.0f), &renderer.cubeMesh }
-	};
-
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -93,22 +85,33 @@ void App::InitializeInspectorWindow() {
 
 	ImGui::Begin("Inspector");
 
-	if (ImGui::Button("Add Cube")) {
-		scene.objects.push_back({ glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), &renderer.cubeMesh });
-	}
-	ImGui::SameLine();
-	if (ImGui::Button("Add Sphere")) {
-		scene.objects.push_back({ glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), &renderer.sphereMesh });
+	if (ImGui::BeginPopupContextWindow("AddObjectMenu", ImGuiPopupFlags_MouseButtonRight)) {
+		if (ImGui::BeginMenu("GameObjects")) {
+			if (ImGui::MenuItem("Cube")) {
+				scene.objects.push_back({ "New Cube", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), &renderer.cubeMesh });
+			}
+			if (ImGui::MenuItem("Sphere")) {
+				scene.objects.push_back({ "New Sphere", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), &renderer.sphereMesh });
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::EndPopup();
 	}
 
 	ImGui::Separator();
 
 	int toDelete = -1;
 	for (int i = 0; i < scene.objects.size(); ++i) {
-		auto& object = scene.objects[i]; // reference — required, see above
-
+		auto& object = scene.objects[i];
 		ImGui::PushID(i);
-		ImGui::Text("Object %d", i);
+
+		char nameBuf[128];
+		strncpy(nameBuf, object.name.c_str(), sizeof(nameBuf));
+		nameBuf[sizeof(nameBuf) - 1] = '\0';
+		if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) {
+			object.name = nameBuf;
+		}
+
 		ImGui::DragFloat3("Position", &object.position.x, 0.1f);
 		ImGui::DragFloat3("Rotation", &object.rotation.x, 1.0f);
 		ImGui::DragFloat3("Scale", &object.scale.x, 0.1f);
@@ -125,7 +128,6 @@ void App::InitializeInspectorWindow() {
 	}
 
 	ImGui::End();
-
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
