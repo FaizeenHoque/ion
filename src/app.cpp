@@ -5,20 +5,10 @@
 #include <sstream>
 
 #include "headers/shader.h"
+#include "renderers/IntegratedRenderer.h"
 
 App::App(std::string windowTitle, float windowWidth, float windowHeight): WINDOW_TITLE(windowTitle), WINDOW_WIDTH(windowWidth), WINDOW_HEIGHT(windowHeight) {
 }
-
-float vertices[] = {
-	0.5f,  0.5f, 0.0f,
-	0.5f, -0.5f, 0.0f,
-   -0.5f, -0.5f, 0.0f,
-   -0.5f,  0.5f, 0.0f,
-};
-unsigned int indices[] = {
-	0, 1, 3,
-	1, 2, 3,
-};
 
 void App::Init() {
 	glfwInit();
@@ -35,24 +25,7 @@ void App::Init() {
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-	shader shader("shaders/IRenderer/vert.glsl", "shaders/IRenderer/frag.glsl");
-	shaderProgram = shader.shaderProgram;
-
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	// EBO stays bound to the VAO's state, so binding it here is enough
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-	glEnableVertexAttribArray(0);
+	renderer.Init(window);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -78,9 +51,7 @@ void App::EngineLoop() {
 	glClearColor(0.184f, 0.188f, 0.188f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	glUseProgram(shaderProgram);
-	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	renderer.Render();
 
 	InitializeInspectorWindow();
 

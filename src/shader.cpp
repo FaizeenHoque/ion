@@ -1,6 +1,6 @@
 #include "headers/shader.h"
 
-shader::shader(const char *vertexPath, const char *fragmentPath) {
+Shader::Shader(const char *vertexPath, const char *fragmentPath) {
 	std::string vertexSrc = LoadShaderSource(vertexPath);
 	std::string fragmentSrc = LoadShaderSource(fragmentPath);
 
@@ -24,11 +24,11 @@ shader::shader(const char *vertexPath, const char *fragmentPath) {
 	glDeleteShader(fragmentShader);
 }
 
-void shader::Use() {
+void Shader::Use() {
 	glUseProgram(shaderProgram);
 }
 
-unsigned int shader::CompileShader(unsigned int type, const char *source) {
+unsigned int Shader::CompileShader(unsigned int type, const char *source) {
 	unsigned int shader = glCreateShader(type);
 	glShaderSource(shader, 1, &source, NULL);
 	glCompileShader(shader);
@@ -44,7 +44,7 @@ unsigned int shader::CompileShader(unsigned int type, const char *source) {
 	return shader;
 }
 
-std::string shader::LoadShaderSource(const char *path) {
+std::string Shader::LoadShaderSource(const char *path) {
 	std::ifstream file(path);
 	if (!file.is_open()) {
 		std::cout << "Failed to open shader file: " << path << std::endl;

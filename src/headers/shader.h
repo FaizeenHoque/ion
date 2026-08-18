@@ -7,11 +7,11 @@
 #include <fstream>
 #include <sstream>
 
-class shader {
+class Shader {
 public:
 	unsigned int shaderProgram;
 
-	shader(const char *vertexPath, const char *fragmentPath);
+	Shader(const char *vertexPath, const char *fragmentPath);
 	void Use();
 
 private:
