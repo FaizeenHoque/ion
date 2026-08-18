@@ -73,11 +73,6 @@ void App::EngineLoop() {
 	camera.aspect = 1280.0 / 720.0f;
 	camera.Init(renderer.shaderProgram);
 
-	static float t = 0.0f;
-	t += deltaTime;
-	scene.objects[0].position.x = sin(t) * 2.0f;
-	scene.objects[0].position.y = cos(t) * 2.0f;
-
 	renderer.Render(scene);
 	InitializeInspectorWindow();
 
@@ -97,6 +92,37 @@ void App::InitializeInspectorWindow() {
 	ImGui::NewFrame();
 
 	ImGui::Begin("Inspector");
+
+	if (ImGui::Button("Add Cube")) {
+		scene.objects.push_back({ glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), &renderer.cubeMesh });
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Add Sphere")) {
+		scene.objects.push_back({ glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), &renderer.sphereMesh });
+	}
+
+	ImGui::Separator();
+
+	int toDelete = -1;
+	for (int i = 0; i < scene.objects.size(); ++i) {
+		auto& object = scene.objects[i]; // reference — required, see above
+
+		ImGui::PushID(i);
+		ImGui::Text("Object %d", i);
+		ImGui::DragFloat3("Position", &object.position.x, 0.1f);
+		ImGui::DragFloat3("Rotation", &object.rotation.x, 1.0f);
+		ImGui::DragFloat3("Scale", &object.scale.x, 0.1f);
+		ImGui::ColorEdit3("Color", &object.color.x);
+		if (ImGui::Button("Delete")) {
+			toDelete = i;
+		}
+		ImGui::Separator();
+		ImGui::PopID();
+	}
+
+	if (toDelete != -1) {
+		scene.objects.erase(scene.objects.begin() + toDelete);
+	}
 
 	ImGui::End();
 

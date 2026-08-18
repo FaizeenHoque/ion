@@ -17,6 +17,7 @@ public:
 	GLuint shaderProgram;
 
 	Mesh cubeMesh;
+	Mesh sphereMesh;
 
 	void Init(GLFWwindow* window);
 	void Render(const Scene &scene);
