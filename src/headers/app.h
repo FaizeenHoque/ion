@@ -49,7 +49,6 @@ private:
 	void InitializeViewportWindow();
 	void InitializeExplorerWindow();
 
-
 	void CreateViewportFramebuffer(int width, int height);
 };
 
