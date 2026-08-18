@@ -74,6 +74,9 @@ void IntegratedRenderer::Render(const Scene& scene) {
 		if (!obj.mesh) continue;
 
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), obj.position);
+		model = glm::rotate(model, glm::radians(obj.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(obj.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(obj.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 		model = glm::scale(model, obj.scale);
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
 		glUniform3fv(colorLocation, 1, glm::value_ptr(obj.color));
