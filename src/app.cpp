@@ -40,7 +40,7 @@ void App::Init() {
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-	ImGui::StyleColorsDark();
+	ImGui::StyleColorsClassic();
 
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
@@ -178,10 +178,28 @@ void App::InitializeHierarchyWindow() {
 	if (ImGui::BeginPopupContextWindow("AddObjectMenu", ImGuiPopupFlags_MouseButtonRight)) {
 		if (ImGui::BeginMenu("GameObjects")) {
 			if (ImGui::MenuItem("Cube")) {
-				scene.objects.push_back({ "New Cube", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), &renderer.cubeMesh });
+				auto mesh = std::make_shared<Mesh>();
+
+				mesh->modelPath = "assets/cube.obj";
+				mesh->Init();
+
+				scene.objects.push_back({ "New Cube", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), mesh });
 			}
 			if (ImGui::MenuItem("Sphere")) {
-				scene.objects.push_back({ "New Sphere", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), &renderer.sphereMesh });
+				auto mesh = std::make_shared<Mesh>();
+
+				mesh->modelPath = "assets/sphere.obj";
+				mesh->Init();
+
+				scene.objects.push_back({ "New Sphere", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), mesh });
+			}
+			if (ImGui::MenuItem("Monkey")) {
+				auto mesh = std::make_shared<Mesh>();
+
+				mesh->modelPath = "assets/monkey.obj";
+				mesh->Init();
+
+				scene.objects.push_back({ "New Sphere", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), mesh });
 			}
 			ImGui::EndMenu();
 		}

@@ -61,12 +61,25 @@ target_link_libraries(ion PRIVATE
         imgui
 )
 file(GLOB_RECURSE SHADER_FILES ${CMAKE_SOURCE_DIR}/src/shaders/*.glsl)
+
 add_custom_command(
         OUTPUT ${CMAKE_BINARY_DIR}/shaders_copied.stamp
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/src/shaders $<TARGET_FILE_DIR:ion>/shaders
+        ${CMAKE_SOURCE_DIR}/src/shaders
+        $<TARGET_FILE_DIR:ion>/shaders
         COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_BINARY_DIR}/shaders_copied.stamp
         DEPENDS ${SHADER_FILES}
 )
-add_custom_target(copy_shaders ALL DEPENDS ${CMAKE_BINARY_DIR}/shaders_copied.stamp)
+
+add_custom_target(copy_shaders ALL
+        DEPENDS ${CMAKE_BINARY_DIR}/shaders_copied.stamp
+)
+
 add_dependencies(ion copy_shaders)
+
+add_custom_command(
+        TARGET ion POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:ion>/assets
+)
