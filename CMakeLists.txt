@@ -12,6 +12,7 @@ add_subdirectory(
 )
 add_library(glad
         libraries/glad/src/glad.c
+        src/headers/camera.h
 )
 target_include_directories(glad PUBLIC
         libraries/glad/include
@@ -42,6 +43,8 @@ add_executable(ion
         src/renderers/headers/IntegratedRenderer.h
         src/renderers/FQRenderer.cpp
         src/renderers/headers/FQRenderer.h
+        src/camera.cpp
+        src/headers/camera.h
 )
 target_include_directories(ion PRIVATE
         libraries/glad/include

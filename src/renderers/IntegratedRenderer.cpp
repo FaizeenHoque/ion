@@ -1,5 +1,6 @@
 #include "headers/IntegratedRenderer.h"
 
+#include "../headers/camera.h"
 #include "../headers/shader.h"
 
 
@@ -32,17 +33,15 @@ void IntegratedRenderer::Render() {
 	glUseProgram(shaderProgram);
 	glBindVertexArray(VAO);
 
+	Camera camera(shaderProgram,
+			      glm::vec3(0.0f, 0.0f, 3.0f),
+				  glm::vec3(0.0f, -90.0f, 0.0f),
+				  60.0f,
+				  0.1f,
+				  100.0f,
+				  1280.0 / 720.0f);
+
 	GLint modelLocation = glGetUniformLocation(shaderProgram, "model");
-	GLint viewLocation = glGetUniformLocation(shaderProgram, "view");
-	GLint projectionLocation = glGetUniformLocation(shaderProgram, "projection");
-
-	glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 3.0f);
-
-	glm::mat4 view = glm::lookAt(cameraPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 projection = glm::perspective(glm::radians(60.0f), 1280.0f / 720.0f, 0.1f, 100.0f);
-
-	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
 	glm::mat4 model;
 	model = glm::mat4(1.0f);

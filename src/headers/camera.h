@@ -1,0 +1,21 @@
+#ifndef ION_CAMERA_H
+#define ION_CAMERA_H
+
+#include "glad/glad.h"
+#include "glm/vec3.hpp"
+
+class Camera {
+public:
+	glm::vec3 position;
+	glm::vec3 rotation;
+
+	float fov;
+	float nearPlane;
+	float farPlane;
+	float aspect;
+
+	Camera(GLuint shaderProgram, glm::vec3 position, glm::vec3 rotation, float fov, float near, float far, float aspect);
+};
+
+
+#endif //ION_CAMERA_H
