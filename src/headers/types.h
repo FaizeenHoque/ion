@@ -12,8 +12,10 @@
 
 struct Mesh {
 	std::string modelPath;
+
 	std::vector<float> vertices{};
 	std::vector<unsigned int> indices{};
+
 	unsigned int VAO = 0, VBO = 0, EBO = 0;
 	unsigned int indexCount = 0;
 
@@ -36,8 +38,12 @@ struct Mesh {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+		// position: location 0
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
+		// normal: location 1
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
 
 		glBindVertexArray(0);
 	}
@@ -45,6 +51,10 @@ struct Mesh {
 	void parseModel() {
 		std::ifstream infile(modelPath);
 		if (!infile.is_open()) { std::cout << "Error opening file" << std::endl; exit(-1); }
+
+		std::vector<float> positions;
+		std::vector<float> rawNormals{};
+		std::unordered_map<std::string, unsigned int> uniqueVertices;
 
 		std::string line;
 		while (std::getline(infile, line)) {
@@ -56,33 +66,70 @@ struct Mesh {
 			if (prefix == "v") {
 				float x, y, z;
 				ss >> x >> y >> z;
+				positions.push_back(x);
+				positions.push_back(y);
+				positions.push_back(z);
+			}
 
-				// std::cout << x << " " << y << " " << z << std::endl;
-
-				vertices.push_back(x);
-				vertices.push_back(y);
-				vertices.push_back(z);
+			// parse normals
+			else if (prefix == "vn") {
+				float x, y, z;
+				ss >> x >> y >> z;
+				rawNormals.push_back(x);
+				rawNormals.push_back(y);
+				rawNormals.push_back(z);
 			}
 
 			// parse face / indices
 			else if (prefix == "f") {
-				std::vector<unsigned int> face;
-
+				std::vector<unsigned int> faceIndices;
 				std::string vertex;
 				while (ss >> vertex) {
-					size_t slash = vertex.find('/');
+					// key for dedup, e.g. "3/7"
+					auto key = vertex; // "posIdx/texIdx/normIdx" style, unique enough as-is
 
-					unsigned int index = std::stoul(
-						vertex.substr(0, slash)
-					) - 1;
+					auto it = uniqueVertices.find(key);
+					if (it != uniqueVertices.end()) {
+						faceIndices.push_back(it->second);
+						continue;
+					}
 
-					face.push_back(index);
+					// parse v/vt/vn manually
+					size_t firstSlash = vertex.find('/');
+					size_t secondSlash = vertex.find('/', firstSlash + 1);
+
+					unsigned int posIdx = std::stoul(vertex.substr(0, firstSlash)) - 1;
+
+					unsigned int normIdx = 0;
+					bool hasNormal = false;
+					if (secondSlash != std::string::npos && secondSlash + 1 < vertex.size()) {
+						normIdx = std::stoul(vertex.substr(secondSlash + 1)) - 1;
+						hasNormal = true;
+					}
+
+					vertices.push_back(positions[posIdx * 3 + 0]);
+					vertices.push_back(positions[posIdx * 3 + 1]);
+					vertices.push_back(positions[posIdx * 3 + 2]);
+
+					if (hasNormal) {
+						vertices.push_back(rawNormals[normIdx * 3 + 0]);
+						vertices.push_back(rawNormals[normIdx * 3 + 1]);
+						vertices.push_back(rawNormals[normIdx * 3 + 2]);
+					} else {
+						vertices.push_back(0.0f);
+						vertices.push_back(0.0f);
+						vertices.push_back(0.0f);
+					}
+
+					unsigned int newIndex = static_cast<unsigned int>(vertices.size() / 6 - 1);
+					uniqueVertices[key] = newIndex;
+					faceIndices.push_back(newIndex);
 				}
 
-				for (size_t i = 1; i + 1 < face.size(); ++i) {
-					indices.push_back(face[0]);
-					indices.push_back(face[i]);
-					indices.push_back(face[i + 1]);
+				for (size_t i = 1; i + 1 < faceIndices.size(); ++i) {
+					indices.push_back(faceIndices[0]);
+					indices.push_back(faceIndices[i]);
+					indices.push_back(faceIndices[i + 1]);
 				}
 			}
 		}
