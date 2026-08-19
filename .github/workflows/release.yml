@@ -113,9 +113,24 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path stage | Out-Null
           $exe = Get-ChildItem -Path build -Recurse -Filter "ion.exe" | Select-Object -First 1
+          if (-not $exe) { throw "Could not find ion.exe under build/" }
           Copy-Item $exe.FullName -Destination stage/
-          Copy-Item -Recurse (Split-Path $exe.FullName)/shaders stage/shaders -ErrorAction SilentlyContinue
-          Copy-Item -Recurse (Split-Path $exe.FullName)/assets stage/assets -ErrorAction SilentlyContinue
+
+          $exeDir = Split-Path $exe.FullName
+          $shadersSrc = Join-Path $exeDir "shaders"
+          $assetsSrc  = Join-Path $exeDir "assets"
+
+          if (Test-Path $shadersSrc) {
+            Copy-Item -Recurse -Path $shadersSrc -Destination (Join-Path "stage" "shaders")
+          } else {
+            Write-Host "No shaders dir at $shadersSrc, skipping"
+          }
+
+          if (Test-Path $assetsSrc) {
+            Copy-Item -Recurse -Path $assetsSrc -Destination (Join-Path "stage" "assets")
+          } else {
+            Write-Host "No assets dir at $assetsSrc, skipping"
+          }
 
       - name: Stage build output (macOS / Linux)
         if: matrix.host != 'windows'
