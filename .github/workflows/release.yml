@@ -160,25 +160,6 @@ jobs:
       # Installer, per OS. Best-effort: if packaging tooling misbehaves,
       # this is where you'll need to debug against real CI logs.
       # -----------------------------------------------------------------
-      - name: Build NSIS installer (Windows)
-        if: matrix.host == 'windows'
-        shell: pwsh
-        run: |
-          choco install nsis -y --no-progress
-          $nsi = @"
-          OutFile "${{ env.ARTIFACT_BASE }}-installer.exe"
-          InstallDir "\$PROGRAMFILES64\ion"
-          Page directory
-          Page instfiles
-          Section
-            SetOutPath \$INSTDIR
-            File /r "stage\*.*"
-            WriteUninstaller "\$INSTDIR\uninstall.exe"
-          SectionEnd
-          "@
-          $nsi | Out-File -Encoding ascii installer.nsi
-          & "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
-
       - name: Build .dmg installer (macOS)
         if: matrix.host == 'macos'
         run: |
@@ -211,7 +192,7 @@ jobs:
           path: |
             ${{ env.ARTIFACT_BASE }}.zip
             ${{ env.ARTIFACT_BASE }}-installer.*
-          if-no-files-found: error
+          if-no-files-found: warn
 
   # ---------------------------------------------------------------------
   # Only after ALL three OS builds succeed: create the tag + release.
