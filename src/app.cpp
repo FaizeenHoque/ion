@@ -37,7 +37,7 @@ void App::Init() {
 	camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
 	camera.rotation = glm::vec3(0.0f, -90.0f, 0.0f);
 	camera.fov = 60.0f;
-	camera.farPlane = 100.0f;
+	camera.farPlane = 100000.0f;
 	camera.nearPlane = 0.1f;
 	camera.aspect = (float)viewportWidth / (float)viewportHeight;
 
