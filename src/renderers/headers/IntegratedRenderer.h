@@ -10,6 +10,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "../../headers/camera.h"
+#include "../../headers/grid.h"
 #include "../../headers/skybox.h"
 #include "../../headers/types.h"
 
@@ -18,6 +19,7 @@ public:
 	GLFWwindow* window;
 	GLuint shaderProgram;
 	Skybox skybox;
+	Grid grid;
 
 	void Init(GLFWwindow* window);
 	void Render(const Scene &scene, const Camera &camera);

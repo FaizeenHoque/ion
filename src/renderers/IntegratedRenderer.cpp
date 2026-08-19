@@ -12,6 +12,7 @@ void IntegratedRenderer::Init(GLFWwindow *window_) {
 	Shader shader("shaders/IRenderer/vert.glsl", "shaders/IRenderer/frag.glsl");
 	shaderProgram = shader.shaderProgram;
 
+	grid.Init();
 	skybox.Init({
 		"assets/skybox/px.png",
 		"assets/skybox/nx.png",
@@ -24,6 +25,7 @@ void IntegratedRenderer::Init(GLFWwindow *window_) {
 
 void IntegratedRenderer::Render(const Scene& scene, const Camera& camera) {
 	skybox.Draw(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+	grid.Draw(camera.GetViewMatrix(), camera.GetProjectionMatrix(), camera.nearPlane, camera.farPlane);
 
 	glUseProgram(shaderProgram);
 	GLint modelLocation = glGetUniformLocation(shaderProgram, "model");

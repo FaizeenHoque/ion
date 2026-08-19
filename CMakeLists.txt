@@ -49,6 +49,8 @@ add_executable(ion
         src/skybox.cpp
         src/headers/skybox.h
         src/stb_image.cpp
+        src/grid.cpp
+        src/headers/grid.h
 )
 target_include_directories(ion PRIVATE
         libraries/glad/include
