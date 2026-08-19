@@ -41,6 +41,15 @@ void App::Init() {
 	camera.nearPlane = 0.1f;
 	camera.aspect = (float)viewportWidth / (float)viewportHeight;
 
+	// setup scene with a directional light
+	scene.lights.push_back({
+					"Directional Light",
+					glm::vec3(0.0f, 0.0f, 0.0f),
+					glm::vec3(-0.2, -1.0, -0.3),
+					glm::vec3(1.0f),
+					glm::vec3(1.0f, 0.5f, 0.3f)
+				});
+
 	// Initialize ImGui with Docking enabled
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -237,10 +246,10 @@ void App::InitializeHierarchyWindow() {
 			ImGui::EndMenu();
 		}
 		else if (ImGui::BeginMenu("Lights")) {
-			if (ImGui::MenuItem("Point Light")) {
+			if (ImGui::MenuItem("Directional Light")) {
 				scene.lights.push_back({
-					"New Point Light",
-					glm::vec3(2.0f, 4.0f, 2.0f),
+					"New Directional Light",
+					glm::vec3(0.0f, 0.0f, 0.0f),
 					glm::vec3(0.0f),
 					glm::vec3(1.0f),
 					glm::vec3(1.0f, 0.5f, 0.3f)
@@ -382,11 +391,11 @@ void App::InitializePropertiesWindow() {
 		ImGui::Separator();
 		ImGui::Text("Transforms");
 		ImGui::DragFloat3("Position", &light.position.x, 0.1f);
-		ImGui::DragFloat3("Rotation", &light.rotation.x, 1.0f);
 
 		ImGui::Separator();
 		ImGui::Text("Light");
 		ImGui::ColorEdit3("Color", &light.lightColor.x);
+		ImGui::DragFloat3("Direction", &light.direction.x, 1.0f);
 
 		ImGui::PopID();
 	}

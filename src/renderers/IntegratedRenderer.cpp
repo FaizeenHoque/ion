@@ -35,6 +35,7 @@ void IntegratedRenderer::Render(const Scene& scene) {
 
 	for (const auto& light: scene.lights) {
 		glUniform3fv(glGetUniformLocation(shaderProgram, "lightPos"), 1, glm::value_ptr(light.position));
+		glUniform3fv(glGetUniformLocation(shaderProgram, "lightDirection"), 1, glm::value_ptr(light.direction));
 		glUniform3fv(glGetUniformLocation(shaderProgram, "lightColor"), 1, glm::value_ptr(light.lightColor));
 		glUniform3fv(glGetUniformLocation(shaderProgram, "objectColor"), 1, glm::value_ptr(light.objectColor));
 	}
