@@ -16,17 +16,24 @@ App::App(std::string windowTitle, float windowWidth, float windowHeight): WINDOW
 void App::Init() {
 	glfwInit();
 
+	// set glfw window hints
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// initialize window with settings applied
 	window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE.c_str(), NULL, NULL);
+	glfwSetWindowSizeLimits(window, WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT);
+	glfwSetWindowSize(window, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
+	// initialize renderer and create the frame buffer
 	renderer.Init(window);
 	CreateViewportFramebuffer(1280, 720);
 
+	// set initial camera positions for engine / NOT GAME
 	camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
 	camera.rotation = glm::vec3(0.0f, -90.0f, 0.0f);
 	camera.fov = 60.0f;
@@ -34,17 +41,16 @@ void App::Init() {
 	camera.nearPlane = 0.1f;
 	camera.aspect = (float)viewportWidth / (float)viewportHeight;
 
+	// Initialize ImGui with Docking enabled
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-
 	ImGui::StyleColorsClassic();
-
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
 
+	// main loop
 	while (!glfwWindowShouldClose(window)) {
 		EngineLoop();
 	}
@@ -52,6 +58,7 @@ void App::Init() {
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 
+	// destroy everything
 	glfwDestroyWindow(window);
 	glfwTerminate();
 }
@@ -59,6 +66,7 @@ void App::Init() {
 void App::EngineLoop() {
 	InputManager();
 
+	// track time, initial delta time
 	float currentTime = static_cast<float>(glfwGetTime());
 	float deltaTime = currentTime - lastFrameTime;
 	lastFrameTime = currentTime;
@@ -67,18 +75,24 @@ void App::EngineLoop() {
 	// size the viewport panel was last frame
 	glBindFramebuffer(GL_FRAMEBUFFER, viewportFBO);
 	glViewport(0, 0, viewportWidth, viewportHeight);
+
+	// set background color for viewport/world
 	glClearColor(0.184f, 0.188f, 0.188f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	// initialize camera settings and renderer
 	camera.aspect = (float)viewportWidth / (float)viewportHeight;
 	camera.Init(renderer.shaderProgram);
 	renderer.Render(scene);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+	// set background color for all windows
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// Initialize all windows using imgui
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
@@ -95,12 +109,15 @@ void App::EngineLoop() {
 	glfwSwapBuffers(window);
 	glfwPollEvents();
 }
+
+// manages all inputs for the engine
 void App::InputManager() {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
 }
 
+// creates an image of the rendered viewport for it to be shown on the viewport window
 void App::CreateViewportFramebuffer(int width, int height) {
 	if (viewportFBO) {
 		glDeleteFramebuffers(1, &viewportFBO);
@@ -129,6 +146,7 @@ void App::CreateViewportFramebuffer(int width, int height) {
 	viewportHeight = height;
 }
 
+// initializes layout for windows
 void App::InitializeDockspace() {
 	ImGuiWindowFlags hostFlags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
 		ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
@@ -172,6 +190,8 @@ void App::InitializeDockspace() {
 
 	ImGui::End();
 }
+
+// window initializers
 void App::InitializeHierarchyWindow() {
 	ImGui::Begin("Hierarchy");
 
