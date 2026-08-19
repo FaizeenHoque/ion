@@ -1,4 +1,4 @@
-#include "headers/IntegratedRenderer.h"
+#include "IntegratedRenderer.h"
 
 #include "../headers/shader.h"
 #include "../headers/types.h"

@@ -8,7 +8,7 @@
 #include "headers/camera.h"
 #include "headers/shader.h"
 #include "headers/types.h"
-#include "renderers/headers/IntegratedRenderer.h"
+#include "renderers/IntegratedRenderer.h"
 
 App::App(std::string windowTitle, float windowWidth, float windowHeight): WINDOW_TITLE(windowTitle), WINDOW_WIDTH(windowWidth), WINDOW_HEIGHT(windowHeight) {
 }

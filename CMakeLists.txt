@@ -41,9 +41,9 @@ add_executable(ion
         src/shader.cpp
         src/headers/shader.h
         src/renderers/IntegratedRenderer.cpp
-        src/renderers/headers/IntegratedRenderer.h
+        src/renderers/IntegratedRenderer.h
         src/renderers/FQRenderer.cpp
-        src/renderers/headers/FQRenderer.h
+        src/renderers/FQRenderer.h
         src/camera.cpp
         src/headers/camera.h
         src/skybox.cpp

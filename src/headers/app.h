@@ -11,7 +11,7 @@
 #include <GLFW/glfw3.h>
 
 #include "camera.h"
-#include "../renderers/headers/IntegratedRenderer.h"
+#include "../renderers/IntegratedRenderer.h"
 
 class App {
 public:

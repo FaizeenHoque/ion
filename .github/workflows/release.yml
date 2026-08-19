@@ -1,0 +1,231 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version part to bump (workflow reads latest tag and increments this)"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  # ---------------------------------------------------------------------
+  # Figure out the new version ONCE, before any OS build starts, so all
+  # three platforms build/tag/release under the exact same version.
+  # ---------------------------------------------------------------------
+  compute-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      tag: ${{ steps.ver.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need full tag history, not a shallow clone
+
+      - name: Compute next version from latest tag
+        id: ver
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_tag=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1 || true)
+          if [ -z "$latest_tag" ]; then
+            echo "No existing vX.Y.Z tag found, starting at v0.1.0"
+            new_version="0.1.0"
+          else
+            ver="${latest_tag#v}"
+            IFS='.' read -r major minor patch <<< "$ver"
+            case "${{ inputs.bump }}" in
+              major) major=$((major+1)); minor=0; patch=0 ;;
+              minor) minor=$((minor+1)); patch=0 ;;
+              patch) patch=$((patch+1)) ;;
+            esac
+            new_version="${major}.${minor}.${patch}"
+          fi
+          new_tag="v${new_version}"
+          echo "Resolved version: $new_version (tag: $new_tag)"
+          echo "version=${new_version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${new_tag}" >> "$GITHUB_OUTPUT"
+
+  # ---------------------------------------------------------------------
+  # Build + package on each OS. Nothing here creates the tag/release yet
+  # -- that happens once, at the end, after all three succeed.
+  # ---------------------------------------------------------------------
+  build:
+    needs: compute-version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            host: windows
+          - os: macos-latest
+            host: macos
+          - os: ubuntu-latest
+            host: linux
+    runs-on: ${{ matrix.os }}
+    env:
+      VERSION: ${{ needs.compute-version.outputs.version }}
+      ARTIFACT_BASE: ion-${{ needs.compute-version.outputs.version }}-${{ matrix.host }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive   # covers libraries/glfw-3.5.1, imgui, glad, etc. if they're submodules
+
+      - name: Install a modern CMake explicitly
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: latest
+
+      # --- Linux system deps for GLFW/OpenGL/X11/Wayland ---
+      - name: Install Linux build dependencies
+        if: matrix.host == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libgl1-mesa-dev \
+            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+            libwayland-dev libxkbcommon-dev \
+            rpm dpkg-dev
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      # -----------------------------------------------------------------
+      # Locate the built executable + assets into a clean stage dir so
+      # zipping/installer steps don't have to know CMake's output layout.
+      # -----------------------------------------------------------------
+      - name: Stage build output (Windows)
+        if: matrix.host == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path stage | Out-Null
+          $exe = Get-ChildItem -Path build -Recurse -Filter "ion.exe" | Select-Object -First 1
+          Copy-Item $exe.FullName -Destination stage/
+          Copy-Item -Recurse (Split-Path $exe.FullName)/shaders stage/shaders -ErrorAction SilentlyContinue
+          Copy-Item -Recurse (Split-Path $exe.FullName)/assets stage/assets -ErrorAction SilentlyContinue
+
+      - name: Stage build output (macOS / Linux)
+        if: matrix.host != 'windows'
+        run: |
+          mkdir -p stage
+          bin=$(find build -maxdepth 3 -type f -name "ion" -perm -u+x | head -n1)
+          cp "$bin" stage/
+          dir=$(dirname "$bin")
+          [ -d "$dir/shaders" ] && cp -r "$dir/shaders" stage/shaders
+          [ -d "$dir/assets" ] && cp -r "$dir/assets" stage/assets
+
+      # -----------------------------------------------------------------
+      # Raw zip, every OS, always produced.
+      # -----------------------------------------------------------------
+      - name: Zip raw build (Windows)
+        if: matrix.host == 'windows'
+        shell: pwsh
+        run: Compress-Archive -Path stage/* -DestinationPath "${env:ARTIFACT_BASE}.zip"
+
+      - name: Zip raw build (macOS / Linux)
+        if: matrix.host != 'windows'
+        run: |
+          cd stage
+          zip -r "../${ARTIFACT_BASE}.zip" .
+
+      # -----------------------------------------------------------------
+      # Installer, per OS. Best-effort: if packaging tooling misbehaves,
+      # this is where you'll need to debug against real CI logs.
+      # -----------------------------------------------------------------
+      - name: Build NSIS installer (Windows)
+        if: matrix.host == 'windows'
+        shell: pwsh
+        run: |
+          choco install nsis -y --no-progress
+          $nsi = @"
+          OutFile "${{ env.ARTIFACT_BASE }}-installer.exe"
+          InstallDir "\$PROGRAMFILES64\ion"
+          Page directory
+          Page instfiles
+          Section
+            SetOutPath \$INSTDIR
+            File /r "stage\*.*"
+            WriteUninstaller "\$INSTDIR\uninstall.exe"
+          SectionEnd
+          "@
+          $nsi | Out-File -Encoding ascii installer.nsi
+          & "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
+
+      - name: Build .dmg installer (macOS)
+        if: matrix.host == 'macos'
+        run: |
+          hdiutil create -volname "ion ${VERSION}" \
+            -srcfolder stage \
+            -ov -format UDZO \
+            "${ARTIFACT_BASE}-installer.dmg"
+
+      - name: Build .deb installer (Linux)
+        if: matrix.host == 'linux'
+        run: |
+          pkgroot="deb/ion"
+          mkdir -p "$pkgroot/DEBIAN" "$pkgroot/opt/ion"
+          cp -r stage/* "$pkgroot/opt/ion/"
+          cat > "$pkgroot/DEBIAN/control" <<EOF
+          Package: ion
+          Version: ${VERSION}
+          Section: base
+          Priority: optional
+          Architecture: amd64
+          Maintainer: unspecified
+          Description: ion
+          EOF
+          dpkg-deb --build --root-owner-group "$pkgroot" "${ARTIFACT_BASE}-installer.deb"
+
+      - name: Upload artifacts for this OS
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_BASE }}
+          path: |
+            ${{ env.ARTIFACT_BASE }}.zip
+            ${{ env.ARTIFACT_BASE }}-installer.*
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------
+  # Only after ALL three OS builds succeed: create the tag + release.
+  # ---------------------------------------------------------------------
+  release:
+    needs: [compute-version, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create tag
+        env:
+          TAG: ${{ needs.compute-version.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.compute-version.outputs.tag }}
+          name: "ion ${{ needs.compute-version.outputs.version }}"
+          files: dist/**
+          fail_on_unmatched_files: true

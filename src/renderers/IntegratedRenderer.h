@@ -9,10 +9,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "../../headers/camera.h"
-#include "../../headers/grid.h"
-#include "../../headers/skybox.h"
-#include "../../headers/types.h"
+#include "../headers/camera.h"
+#include "../headers/grid.h"
+#include "../headers/skybox.h"
+#include "../headers/types.h"
 
 class IntegratedRenderer {
 public:
