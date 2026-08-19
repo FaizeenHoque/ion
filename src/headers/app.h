@@ -51,6 +51,18 @@ private:
 	SelectionType selectedType = SelectionType::None;
 	int selectedIndex = -1;
 
+	// scene camera state
+	bool viewportHovered = false;
+	bool viewportFocused = false;
+	bool wasFlying = false;
+	bool flyLatched = false;
+	bool firstMouse = true;
+	float cameraSpeed = 5.0f;
+	float mouseSensitivity = 0.15f;
+	float deltaTimeCache = 0.0f;
+
+	void UpdateSceneCamera(float deltaTime);
+
 	void EngineLoop();
 	void InputManager();
 

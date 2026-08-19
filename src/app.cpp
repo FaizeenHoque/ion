@@ -71,6 +71,10 @@ void App::EngineLoop() {
 	float deltaTime = currentTime - lastFrameTime;
 	lastFrameTime = currentTime;
 
+	// cache deltaTime so window-init functions (called later this frame)
+	// can use it for camera movement without changing their signatures
+	deltaTimeCache = deltaTime;
+
 	// render scene into the offscreen framebuffer, using whatever
 	// size the viewport panel was last frame
 	glBindFramebuffer(GL_FRAMEBUFFER, viewportFBO);
@@ -418,10 +422,116 @@ void App::InitializeViewportWindow() {
 
 	ImGui::Image((ImTextureID)(intptr_t)viewportTexture, ImVec2(displayWidth, displayHeight), ImVec2(0, 1), ImVec2(1, 0));
 
+	viewportHovered = ImGui::IsItemHovered();
+	viewportFocused = ImGui::IsWindowFocused();
+	UpdateSceneCamera(deltaTimeCache);
+
 	ImGui::End();
 }
 void App::InitializeExplorerWindow() {
 	ImGui::Begin("Explorer");
 	ImGui::Text("Explorer");
 	ImGui::End();
+}
+
+// Unity-style scene camera: hold right mouse button over the viewport to
+// mouse-look and fly with WASD/Q/E, middle-mouse drag to pan, scroll to dolly.
+void App::UpdateSceneCamera(float deltaTime) {
+	ImGuiIO& io = ImGui::GetIO();
+
+	bool rightMouseDown = ImGui::IsMouseDown(ImGuiMouseButton_Right);
+	bool rightMousePressed = ImGui::IsMouseClicked(ImGuiMouseButton_Right);
+
+	// latch flying on when the right button is first pressed while hovered;
+	// once latched, keep flying until the button is released, even if the
+	// disabled/pinned OS cursor makes hover-testing unreliable mid-drag
+	if (rightMousePressed && viewportHovered) {
+		flyLatched = true;
+	}
+	if (!rightMouseDown) {
+		flyLatched = false;
+	}
+	bool shouldFly = flyLatched;
+
+	// only touch the GLFW cursor mode on state transitions, not every frame
+	if (shouldFly && !wasFlying) {
+		// disabling the cursor hides it AND gives unbounded relative motion,
+		// so the mouse never actually hits the edge of the screen while flying
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		firstMouse = true;
+	}
+	else if (!shouldFly && wasFlying) {
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
+	wasFlying = shouldFly;
+
+	if (shouldFly) {
+		// with the cursor disabled, io.MouseDelta already reflects raw
+		// relative motion for this frame, so we don't need to diff positions
+		glm::vec2 delta(io.MouseDelta.x, io.MouseDelta.y);
+
+		if (firstMouse) {
+			// swallow the first frame's delta, which can spike when the
+			// cursor mode just changed
+			delta = glm::vec2(0.0f);
+			firstMouse = false;
+		}
+
+		// yaw/pitch update
+		camera.rotation.y += delta.x * mouseSensitivity;
+		camera.rotation.x -= delta.y * mouseSensitivity;
+
+		// clamp pitch so you can't flip over
+		camera.rotation.x = glm::clamp(camera.rotation.x, -89.0f, 89.0f);
+
+		// build forward/right/up vectors from yaw/pitch
+		glm::vec3 forward;
+		forward.x = cos(glm::radians(camera.rotation.y)) * cos(glm::radians(camera.rotation.x));
+		forward.y = sin(glm::radians(camera.rotation.x));
+		forward.z = sin(glm::radians(camera.rotation.y)) * cos(glm::radians(camera.rotation.x));
+		forward = glm::normalize(forward);
+
+		glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0f, 1.0f, 0.0f)));
+		glm::vec3 up = glm::normalize(glm::cross(right, forward));
+
+		float speed = cameraSpeed * deltaTime;
+		if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
+			speed *= 3.0f; // Unity-style sprint
+		}
+
+		if (ImGui::IsKeyDown(ImGuiKey_W)) camera.position += forward * speed;
+		if (ImGui::IsKeyDown(ImGuiKey_S)) camera.position -= forward * speed;
+		if (ImGui::IsKeyDown(ImGuiKey_A)) camera.position -= right * speed;
+		if (ImGui::IsKeyDown(ImGuiKey_D)) camera.position += right * speed;
+		if (ImGui::IsKeyDown(ImGuiKey_E)) camera.position += up * speed;
+		if (ImGui::IsKeyDown(ImGuiKey_Q)) camera.position -= up * speed;
+	}
+	// middle-mouse pan, only while hovered
+	if (viewportHovered && ImGui::IsMouseDown(ImGuiMouseButton_Middle)) {
+		ImVec2 mouseDelta = io.MouseDelta;
+
+		glm::vec3 forward;
+		forward.x = cos(glm::radians(camera.rotation.y)) * cos(glm::radians(camera.rotation.x));
+		forward.y = sin(glm::radians(camera.rotation.x));
+		forward.z = sin(glm::radians(camera.rotation.y)) * cos(glm::radians(camera.rotation.x));
+		forward = glm::normalize(forward);
+
+		glm::vec3 right = glm::normalize(glm::cross(forward, glm::vec3(0.0f, 1.0f, 0.0f)));
+		glm::vec3 up = glm::normalize(glm::cross(right, forward));
+
+		float panSpeed = 0.01f;
+		camera.position -= right * mouseDelta.x * panSpeed;
+		camera.position += up * mouseDelta.y * panSpeed;
+	}
+
+	// scroll wheel = dolly forward/back, Unity-style
+	if (viewportHovered && io.MouseWheel != 0.0f) {
+		glm::vec3 forward;
+		forward.x = cos(glm::radians(camera.rotation.y)) * cos(glm::radians(camera.rotation.x));
+		forward.y = sin(glm::radians(camera.rotation.x));
+		forward.z = sin(glm::radians(camera.rotation.y)) * cos(glm::radians(camera.rotation.x));
+		forward = glm::normalize(forward);
+
+		camera.position += forward * io.MouseWheel * 0.5f;
+	}
 }
