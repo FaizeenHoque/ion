@@ -1,5 +1,3 @@
-# ion
-
 I started building `ion` because I was tired of using other people's engines
 without understanding what was actually happening underneath them. It's a
 from-scratch attempt to understand the OpenGL rendering pipeline and
