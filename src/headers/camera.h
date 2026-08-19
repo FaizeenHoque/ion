@@ -2,6 +2,7 @@
 #define ION_CAMERA_H
 
 #include "glad/glad.h"
+#include "glm/fwd.hpp"
 #include "glm/vec3.hpp"
 
 class Camera {
@@ -16,6 +17,9 @@ public:
 
 	void Init(GLuint shaderProgram);
 	void SetParams(GLuint shaderProgram);
+
+	glm::mat4 GetViewMatrix() const;
+	glm::mat4 GetProjectionMatrix() const;
 };
 
 

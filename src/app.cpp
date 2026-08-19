@@ -97,7 +97,7 @@ void App::EngineLoop() {
 	camera.aspect = (float)viewportWidth / (float)viewportHeight;
 	camera.Init(renderer.shaderProgram);
 	camera.SetParams(renderer.shaderProgram);
-	renderer.Render(scene);
+	renderer.Render(scene, camera);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -214,7 +214,7 @@ void App::InitializeHierarchyWindow() {
 			if (ImGui::MenuItem("Quad")) {
 				auto mesh = std::make_shared<Mesh>();
 
-				mesh->modelPath = "assets/quad.obj";
+				mesh->modelPath = "assets/meshes/quad.obj";
 				mesh->Init();
 
 				scene.objects.push_back({ "New Quad", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), mesh });
@@ -222,7 +222,7 @@ void App::InitializeHierarchyWindow() {
 			if (ImGui::MenuItem("Cube")) {
 				auto mesh = std::make_shared<Mesh>();
 
-				mesh->modelPath = "assets/cube.obj";
+				mesh->modelPath = "assets/meshes/cube.obj";
 				mesh->Init();
 
 				scene.objects.push_back({ "New Cube", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), mesh });
@@ -230,7 +230,7 @@ void App::InitializeHierarchyWindow() {
 			if (ImGui::MenuItem("Sphere")) {
 				auto mesh = std::make_shared<Mesh>();
 
-				mesh->modelPath = "assets/sphere.obj";
+				mesh->modelPath = "assets/meshes/sphere.obj";
 				mesh->Init();
 
 				scene.objects.push_back({ "New Sphere", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), mesh });
@@ -238,7 +238,7 @@ void App::InitializeHierarchyWindow() {
 			if (ImGui::MenuItem("Monkey")) {
 				auto mesh = std::make_shared<Mesh>();
 
-				mesh->modelPath = "assets/monkey.obj";
+				mesh->modelPath = "assets/meshes/monkey.obj";
 				mesh->Init();
 
 				scene.objects.push_back({ "New Monkey", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), mesh });

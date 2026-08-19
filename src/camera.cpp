@@ -23,3 +23,16 @@ void Camera::Init(GLuint shaderProgram) {
 void Camera::SetParams(GLuint shaderProgram) {
 	glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(position));
 }
+
+glm::mat4 Camera::GetViewMatrix() const {
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
+	direction.y = sin(glm::radians(rotation.x));
+	direction.z = cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
+
+	return glm::lookAt(position, position + glm::normalize(direction), glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
+glm::mat4 Camera::GetProjectionMatrix() const {
+	return glm::perspective(glm::radians(fov), aspect, nearPlane, farPlane);
+}

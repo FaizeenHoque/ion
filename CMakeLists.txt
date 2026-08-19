@@ -46,6 +46,9 @@ add_executable(ion
         src/renderers/headers/FQRenderer.h
         src/camera.cpp
         src/headers/camera.h
+        src/skybox.cpp
+        src/headers/skybox.h
+        src/stb_image.cpp
 )
 target_include_directories(ion PRIVATE
         libraries/glad/include
@@ -53,6 +56,7 @@ target_include_directories(ion PRIVATE
         libraries/glm
         libraries/imgui
         libraries/imgui/backends
+        libraries/stb
 )
 target_link_libraries(ion PRIVATE
         glad

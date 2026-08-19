@@ -11,9 +11,20 @@ void IntegratedRenderer::Init(GLFWwindow *window_) {
 
 	Shader shader("shaders/IRenderer/vert.glsl", "shaders/IRenderer/frag.glsl");
 	shaderProgram = shader.shaderProgram;
+
+	skybox.Init({
+		"assets/skybox/px.png",
+		"assets/skybox/nx.png",
+		"assets/skybox/py.png",
+		"assets/skybox/ny.png",
+		"assets/skybox/pz.png",
+		"assets/skybox/nz.png"
+	});
 }
 
-void IntegratedRenderer::Render(const Scene& scene) {
+void IntegratedRenderer::Render(const Scene& scene, const Camera& camera) {
+	skybox.Draw(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+
 	glUseProgram(shaderProgram);
 	GLint modelLocation = glGetUniformLocation(shaderProgram, "model");
 	GLint colorLocation = glGetUniformLocation(shaderProgram, "objectColor");

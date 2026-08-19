@@ -9,15 +9,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "../../headers/camera.h"
+#include "../../headers/skybox.h"
 #include "../../headers/types.h"
 
 class IntegratedRenderer {
 public:
 	GLFWwindow* window;
 	GLuint shaderProgram;
+	Skybox skybox;
 
 	void Init(GLFWwindow* window);
-	void Render(const Scene &scene);
+	void Render(const Scene &scene, const Camera &camera);
 
 };
 
