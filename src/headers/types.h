@@ -150,8 +150,17 @@ struct GameObject {
 	std::shared_ptr<Mesh> mesh;
 };
 
+struct Light {
+	std::string name;
+	glm::vec3 position;
+	glm::vec3 rotation;
+	glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+	glm::vec3 objectColor = glm::vec3(1.0f, 1.0f, 1.0f);
+};
+
 struct Scene {
 	std::vector<GameObject> objects;
+	std::vector<Light> lights;
 };
 
 #endif //ION_TYPES_H

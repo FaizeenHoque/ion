@@ -38,6 +38,17 @@ private:
 	unsigned int viewportTexture;
 	unsigned int viewportRBO;
 
+	enum class SelectionType {
+		None,
+		Object,
+		Light
+	};
+	enum class DeleteType {
+		None,
+		Object,
+		Light
+	};
+	SelectionType selectedType = SelectionType::None;
 	int selectedIndex = -1;
 
 	void EngineLoop();

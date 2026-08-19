@@ -32,5 +32,11 @@ void IntegratedRenderer::Render(const Scene& scene) {
 		obj.mesh->Bind();
 		glDrawElements(GL_TRIANGLES, obj.mesh->GetIndexCount(), GL_UNSIGNED_INT, nullptr);
 	}
+
+	for (const auto& light: scene.lights) {
+		glUniform3fv(glGetUniformLocation(shaderProgram, "lightPos"), 1, glm::value_ptr(light.position));
+		glUniform3fv(glGetUniformLocation(shaderProgram, "lightColor"), 1, glm::value_ptr(light.lightColor));
+		glUniform3fv(glGetUniformLocation(shaderProgram, "objectColor"), 1, glm::value_ptr(light.objectColor));
+	}
 }
 

@@ -83,6 +83,7 @@ void App::EngineLoop() {
 	// initialize camera settings and renderer
 	camera.aspect = (float)viewportWidth / (float)viewportHeight;
 	camera.Init(renderer.shaderProgram);
+	camera.SetParams(renderer.shaderProgram);
 	renderer.Render(scene);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -197,6 +198,14 @@ void App::InitializeHierarchyWindow() {
 
 	if (ImGui::BeginPopupContextWindow("AddObjectMenu", ImGuiPopupFlags_MouseButtonRight)) {
 		if (ImGui::BeginMenu("GameObjects")) {
+			if (ImGui::MenuItem("Quad")) {
+				auto mesh = std::make_shared<Mesh>();
+
+				mesh->modelPath = "assets/quad.obj";
+				mesh->Init();
+
+				scene.objects.push_back({ "New Quad", glm::vec3(0.0f), glm::vec3(0.0f), glm::vec3(1.0f), glm::vec3(1.0f), mesh });
+			}
 			if (ImGui::MenuItem("Cube")) {
 				auto mesh = std::make_shared<Mesh>();
 
@@ -223,29 +232,79 @@ void App::InitializeHierarchyWindow() {
 			}
 			ImGui::EndMenu();
 		}
+		else if (ImGui::BeginMenu("Lights")) {
+			if (ImGui::MenuItem("Point Light")) {
+				scene.lights.push_back({
+					"New Point Light",
+					glm::vec3(2.0f, 4.0f, 2.0f),
+					glm::vec3(0.0f),
+					glm::vec3(1.0f),
+					glm::vec3(1.0f, 0.5f, 0.3f)
+				});
+			}
+			ImGui::EndMenu();
+		}
 		ImGui::EndPopup();
 	}
 
+	DeleteType deleteType = DeleteType::None;
 	int toDelete = -1;
+
+	// gameobjects
 	for (int i = 0; i < scene.objects.size(); ++i) {
 		ImGui::PushID(i);
-		bool isSelected = (selectedIndex == i);
+
+		bool isSelected = selectedType == SelectionType::Object && selectedIndex == i;
+
 		if (ImGui::Selectable(scene.objects[i].name.c_str(), isSelected)) {
+			selectedType = SelectionType::Object;
 			selectedIndex = i;
 		}
+
 		if (ImGui::BeginPopupContextItem("ObjectContextMenu")) {
 			if (ImGui::MenuItem("Delete")) {
 				toDelete = i;
+				deleteType = DeleteType::Object;
 			}
 			ImGui::EndPopup();
 		}
+
 		ImGui::PopID();
 	}
 
+	// lights
+	for (int i = 0; i < scene.lights.size(); ++i) {
+		ImGui::PushID(i + scene.objects.size());
+
+		bool isSelected = selectedType == SelectionType::Light && selectedIndex == i;
+
+		if (ImGui::Selectable(scene.lights[i].name.c_str(), isSelected)) {
+			selectedType = SelectionType::Light;
+			selectedIndex = i;
+		}
+
+		if (ImGui::BeginPopupContextItem("LightContextMenu")) {
+			if (ImGui::MenuItem("Delete")) {
+				toDelete = i;
+				deleteType = DeleteType::Light;
+			}
+			ImGui::EndPopup();
+		}
+
+		ImGui::PopID();
+	}
+
+	// delete
 	if (toDelete != -1) {
-		scene.objects.erase(scene.objects.begin() + toDelete);
-		if (selectedIndex == toDelete) selectedIndex = -1;
-		else if (selectedIndex > toDelete) selectedIndex--;
+		if (deleteType == DeleteType::Object) {
+			scene.objects.erase(scene.objects.begin() + toDelete);
+		}
+		else if (deleteType == DeleteType::Light) {
+			scene.lights.erase(scene.lights.begin() + toDelete);
+		}
+
+		selectedIndex = -1;
+		selectedType = SelectionType::None;
 	}
 
 	ImGui::End();
@@ -253,33 +312,81 @@ void App::InitializeHierarchyWindow() {
 void App::InitializePropertiesWindow() {
 	ImGui::Begin("Properties");
 
-	if (selectedIndex < 0 || selectedIndex >= (int)scene.objects.size()) {
+	if (selectedIndex < 0) {
 		ImGui::TextDisabled("No object selected");
 		ImGui::End();
 		return;
 	}
 
-	auto& object = scene.objects[selectedIndex];
-	ImGui::PushID(selectedIndex);
+	// object properties
+	if (selectedType == SelectionType::Object) {
+		if (selectedIndex >= (int)scene.objects.size()) {
+			selectedIndex = -1;
+			selectedType = SelectionType::None;
 
-	char nameBuf[128];
-	strncpy(nameBuf, object.name.c_str(), sizeof(nameBuf));
-	nameBuf[sizeof(nameBuf) - 1] = '\0';
-	if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) {
-		object.name = nameBuf;
+			ImGui::TextDisabled("No object selected");
+			ImGui::End();
+			return;
+		}
+
+		auto& object = scene.objects[selectedIndex];
+		ImGui::PushID(selectedIndex);
+
+		char nameBuf[128];
+		strncpy(nameBuf, object.name.c_str(), sizeof(nameBuf));
+		nameBuf[sizeof(nameBuf) - 1] = '\0';
+
+		if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) {
+			object.name = nameBuf;
+		}
+
+		ImGui::Separator();
+		ImGui::Text("Transforms");
+		ImGui::DragFloat3("Position", &object.position.x, 0.1f);
+		ImGui::DragFloat3("Rotation", &object.rotation.x, 1.0f);
+		ImGui::DragFloat3("Scale", &object.scale.x, 0.1f);
+
+		ImGui::Separator();
+		ImGui::Text("Material");
+		ImGui::ColorEdit3("Color", &object.color.x);
+
+		ImGui::PopID();
 	}
 
-	ImGui::Separator();
-	ImGui::Text("Transforms");
-	ImGui::DragFloat3("Position", &object.position.x, 0.1f);
-	ImGui::DragFloat3("Rotation", &object.rotation.x, 1.0f);
-	ImGui::DragFloat3("Scale", &object.scale.x, 0.1f);
+	// light properties
+	else if (selectedType == SelectionType::Light) {
+		if (selectedIndex >= (int)scene.lights.size()) {
+			selectedIndex = -1;
+			selectedType = SelectionType::None;
 
-	ImGui::Separator();
-	ImGui::Text("Material");
-	ImGui::ColorEdit3("Color", &object.color.x);
+			ImGui::TextDisabled("No light selected");
+			ImGui::End();
+			return;
+		}
 
-	ImGui::PopID();
+		auto& light = scene.lights[selectedIndex];
+		ImGui::PushID(selectedIndex);
+
+		char nameBuf[128];
+		strncpy(nameBuf, light.name.c_str(), sizeof(nameBuf));
+		nameBuf[sizeof(nameBuf) - 1] = '\0';
+
+		if (ImGui::InputText("Name", nameBuf, sizeof(nameBuf))) {
+			light.name = nameBuf;
+		}
+
+		ImGui::Separator();
+		ImGui::Text("Transforms");
+		ImGui::DragFloat3("Position", &light.position.x, 0.1f);
+		ImGui::DragFloat3("Rotation", &light.rotation.x, 1.0f);
+
+		ImGui::Separator();
+		ImGui::Text("Light");
+		ImGui::ColorEdit3("Color", &light.lightColor.x);
+
+		ImGui::PopID();
+	}
+
 	ImGui::End();
 }
 void App::InitializeViewportWindow() {

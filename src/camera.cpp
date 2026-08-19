@@ -19,3 +19,7 @@ void Camera::Init(GLuint shaderProgram) {
 	glUniformMatrix4fv(viewLocation, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 }
+
+void Camera::SetParams(GLuint shaderProgram) {
+	glUniform3fv(glGetUniformLocation(shaderProgram, "viewPos"), 1, glm::value_ptr(position));
+}

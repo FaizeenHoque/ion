@@ -15,6 +15,7 @@ public:
 	float aspect;
 
 	void Init(GLuint shaderProgram);
+	void SetParams(GLuint shaderProgram);
 };
 
 
